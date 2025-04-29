@@ -1,99 +1,180 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Crypto Price Tracker
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS application that tracks cryptocurrency prices (ETH and MATIC) and sends email alerts on significant price movements.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- Automated price tracking every 5 minutes
+- Price increase email alerts (>3% in 1 hour)
+- Target price alerts
+- Historical price data storage
+- API endpoints with Swagger documentation
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+- NestJS framework
+- PostgreSQL database
+- CoinGecko API for crypto prices
+- Nodemailer for email notifications
+- TypeORM for database management
+- Swagger for API documentation
+- Docker and Docker Compose
 
-```bash
-$ npm install
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v16+)
+- PostgreSQL
+- Docker and Docker Compose (optional)
+
+### Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-username/crypto-price-tracker.git
+   cd crypto-price-tracker
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Configure your environment variables:
+   - Create a `.env` file based on `.env.example`
+   - Set your database and email credentials
+
+4. Start the application:
+   ```
+   npm run start:dev
+   ```
+
+### Using Docker
+
+1. Build and start the containers:
+   ```
+   docker-compose up -d
+   ```
+
+2. The application will be available at http://localhost:3000
+
+## API Endpoints
+
+### Price Endpoints
+
+#### Get Current Prices
+```
+GET /prices
 ```
 
-## Compile and run the project
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+Response:
+```json
+{
+  "ethereum": 2345.67,
+  "matic": 0.765
+}
 ```
 
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+#### Get Price History for a Token
+```
+GET /prices/:token?limit=24
 ```
 
-## Deployment
+Parameters:
+- `token`: `ethereum` or `matic`
+- `limit` (optional): Number of data points to return (default: 24)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+Response:
+```json
+[
+  {
+    "id": 123,
+    "token": "ethereum",
+    "price": 2345.67,
+    "timestamp": "2023-05-15T12:05:00.000Z"
+  },
+  {
+    "id": 120,
+    "token": "ethereum",
+    "price": 2342.50,
+    "timestamp": "2023-05-15T12:00:00.000Z"
+  }
+]
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Alert Endpoints
 
-## Resources
+#### Create Price Alert
+```
+POST /alerts
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Request body:
+```json
+{
+  "token": "ethereum",
+  "targetPrice": 2500,
+  "email": "user@example.com"
+}
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Response:
+```json
+{
+  "id": 1,
+  "token": "ethereum",
+  "targetPrice": 2500,
+  "email": "user@example.com",
+  "triggered": false,
+  "createdAt": "2023-05-15T12:00:00.000Z"
+}
+```
 
-## Support
+#### Get Active Price Alerts
+```
+GET /alerts
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Response:
+```json
+[
+  {
+    "id": 1,
+    "token": "ethereum",
+    "targetPrice": 2500,
+    "email": "user@example.com",
+    "triggered": false,
+    "createdAt": "2023-05-15T12:00:00.000Z"
+  }
+]
+```
 
-## Stay in touch
+## Swagger Documentation
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Access the Swagger documentation at http://localhost:3000/api
+
+## Testing Email Functionality
+
+Send a test email:
+```
+POST /test-email
+```
+
+Request body:
+```json
+{
+  "email": "your-email@example.com"
+}
+```
+
+Response:
+```json
+{
+  "message": "Test email sent"
+}
+```
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
-# Requirements
+This project is licensed under the MIT License.
