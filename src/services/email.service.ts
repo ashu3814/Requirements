@@ -1,31 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { ConfigService } from '../config/config.service';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter;
 
-  constructor() {
-    // Initialize nodemailer transporter
-    // For production, you should use environment variables for these credentials
+  constructor(private configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: this.configService.emailService,
       auth: {
-        user: 'your-email@gmail.com', // Replace with your email or use environment variables
-        pass: 'your-app-password', // Replace with your app password or use environment variables
+        user: this.configService.emailUser,
+        pass: this.configService.emailPassword,
       },
     });
   }
 
-  /**
-   * Send a price alert email
-   * @param recipient Email recipient
-   * @param token Cryptocurrency token (ETH/MATIC)
-   * @param currentPrice Current price 
-   * @param previousPrice Previous price (1 hour ago)
-   * @param percentageIncrease Percentage increase
-   */
   async sendPriceAlertEmail(
     recipient: string,
     token: string,
@@ -37,7 +28,7 @@ export class EmailService {
     
     try {
       const mailOptions = {
-        from: 'your-email@gmail.com', // Replace with your email
+        from: this.configService.emailFrom,
         to: recipient,
         subject: `Price Alert: ${tokenName} increased by ${percentageIncrease.toFixed(2)}%`,
         html: `
@@ -59,13 +50,6 @@ export class EmailService {
     }
   }
 
-  /**
-   * Send a target price reached alert email
-   * @param recipient Email recipient
-   * @param token Cryptocurrency token
-   * @param currentPrice Current price
-   * @param targetPrice Target price that was reached/exceeded
-   */
   async sendTargetPriceAlertEmail(
     recipient: string,
     token: string,
@@ -76,7 +60,7 @@ export class EmailService {
     
     try {
       const mailOptions = {
-        from: 'your-email@gmail.com', // Replace with your email
+        from: this.configService.emailFrom,
         to: recipient,
         subject: `Target Price Alert: ${tokenName} has reached your target price`,
         html: `
@@ -97,14 +81,10 @@ export class EmailService {
     }
   }
 
-  /**
-   * Send a test email to verify the email service is working
-   * @param recipient Email recipient
-   */
   async sendTestEmail(recipient: string): Promise<void> {
     try {
       const mailOptions = {
-        from: 'your-email@gmail.com', // Replace with your email
+        from: this.configService.emailFrom,
         to: recipient,
         subject: 'Crypto Price Tracker: Test Email',
         html: `

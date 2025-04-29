@@ -12,18 +12,25 @@ import { EmailService } from './services/email.service';
 import { PriceService } from './services/price.service';
 import { PriceController } from './controllers/price.controller';
 import { AlertController } from './controllers/alert.controller';
+import { ConfigModule } from './config/config.module';
+import { ConfigService } from './config/config.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'crypto_user', // Your database username
-      password: 'CryptoTrack2025!', // Your database password
-      database: 'crypto_tracker',
-      entities: [Price, PriceAlert],
-      synchronize: true,
+    ConfigModule,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.dbHost,
+        port: configService.dbPort,
+        username: configService.dbUsername,
+        password: configService.dbPassword,
+        database: configService.dbDatabase,
+        entities: [Price, PriceAlert],
+        synchronize: true,
+      }),
     }),
     TypeOrmModule.forFeature([Price, PriceAlert]),
     ScheduleModule.forRoot(),

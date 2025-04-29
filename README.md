@@ -178,3 +178,44 @@ Response:
 ## License
 
 This project is licensed under the MIT License.
+
+
+## Environment Configuration
+
+This application uses environment variables for configuration. Create a `.env` file in the root directory with the following variables:
+
+```
+# Database Configuration
+DB_TYPE=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=your_db_username
+DB_PASSWORD=your_db_password
+DB_DATABASE=crypto_tracker
+
+# Email Configuration
+EMAIL_SERVICE=gmail
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+EMAIL_FROM=your-email@gmail.com
+
+# API Configuration
+COINGECKO_API_URL=https://api.coingecko.com/api/v3
+
+# Application Configuration
+PORT=3000
+DEFAULT_RECIPIENT=prakash@rainfall.one
+PRICE_INCREASE_THRESHOLD=3
+```
+
+### Setting up Gmail for sending emails
+
+To use Gmail for sending emails:
+
+1. Enable 2-Step Verification for your Google Account
+2. Create an App Password:
+   - Go to your Google Account
+   - Navigate to Security > App passwords
+   - Select "Mail" as the app and "Other" as the device
+   - Generate and copy the 16-character password
+3. Use this password as the `EMAIL_PASSWORD` in your .env file

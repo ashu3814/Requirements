@@ -1,17 +1,16 @@
-// src/services/coin-gecko.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
+import { ConfigService } from '../config/config.service';
 
 @Injectable()
 export class CoinGeckoService {
   private readonly logger = new Logger(CoinGeckoService.name);
-  private readonly baseUrl = 'https://api.coingecko.com/api/v3';
+  private readonly baseUrl: string;
 
-  /**
-   * Fetches current price for specified cryptocurrencies
-   * @param coinIds Array of coin IDs (e.g., 'ethereum', 'matic-network')
-   * @returns Object with coin prices in USD
-   */
+  constructor(private configService: ConfigService) {
+    this.baseUrl = this.configService.coingeckoApiUrl;
+  }
+
   async getTokenPrices(coinIds: string[]): Promise<Record<string, number>> {
     try {
       const response = await axios.get(`${this.baseUrl}/simple/price`, {
@@ -21,7 +20,6 @@ export class CoinGeckoService {
         },
       });
 
-      // Transform the response into a simpler format
       const prices: Record<string, number> = {};
       for (const coinId of coinIds) {
         if (response.data[coinId]) {
@@ -37,28 +35,16 @@ export class CoinGeckoService {
     }
   }
 
-  /**
-   * Fetch Ethereum price
-   * @returns Current ETH price in USD
-   */
   async getEthereumPrice(): Promise<number> {
     const prices = await this.getTokenPrices(['ethereum']);
     return prices['ethereum'];
   }
 
-  /**
-   * Fetch Polygon (MATIC) price
-   * @returns Current MATIC price in USD
-   */
   async getPolygonPrice(): Promise<number> {
     const prices = await this.getTokenPrices(['matic-network']);
     return prices['matic-network'];
   }
 
-  /**
-   * Fetch both ETH and MATIC prices at once
-   * @returns Object with both prices
-   */
   async getEthAndMaticPrices(): Promise<{ ethereum: number; matic: number }> {
     const prices = await this.getTokenPrices(['ethereum', 'matic-network']);
     return {

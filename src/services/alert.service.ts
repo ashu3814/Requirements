@@ -4,12 +4,13 @@ import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { Price } from '../entities/price.entity';
 import { PriceAlert } from '../entities/price-alert.entity';
 import { EmailService } from './email.service';
+import { ConfigService } from '../config/config.service';
 
 @Injectable()
 export class AlertService {
   private readonly logger = new Logger(AlertService.name);
-  private readonly DEFAULT_RECIPIENT = 'prakash@rainfall.one';
-  private readonly PRICE_INCREASE_THRESHOLD = 3; // 3% increase threshold
+  private readonly DEFAULT_RECIPIENT: string;
+  private readonly PRICE_INCREASE_THRESHOLD: number;
 
   constructor(
     @InjectRepository(Price)
@@ -17,15 +18,15 @@ export class AlertService {
     @InjectRepository(PriceAlert)
     private priceAlertRepository: Repository<PriceAlert>,
     private emailService: EmailService,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    this.DEFAULT_RECIPIENT = this.configService.defaultRecipient;
+    this.PRICE_INCREASE_THRESHOLD = this.configService.priceIncreaseThreshold;
+  }
 
-  /**
-   * Check for significant price increases (>3% in 1 hour) and send alerts
-   */
   async checkPriceIncreases(): Promise<void> {
     this.logger.log('Checking for significant price increases...');
     
-    // Get tokens to check
     const tokens = ['ethereum', 'matic'];
     
     for (const token of tokens) {
@@ -33,13 +34,8 @@ export class AlertService {
     }
   }
 
-  /**
-   * Check price increase for a specific token
-   * @param token Token to check (ethereum or matic)
-   */
   private async checkTokenPriceIncrease(token: string): Promise<void> {
     try {
-      // Get current price
       const currentPrice = await this.priceRepository.findOne({
         where: { token },
         order: { timestamp: 'DESC' },
@@ -50,7 +46,6 @@ export class AlertService {
         return;
       }
 
-      // Get price from 1 hour ago
       const oneHourAgo = new Date();
       oneHourAgo.setHours(oneHourAgo.getHours() - 1);
       
@@ -67,10 +62,8 @@ export class AlertService {
         return;
       }
 
-      // Calculate percentage increase
       const percentageIncrease = ((currentPrice.price - previousPrice.price) / previousPrice.price) * 100;
       
-      // If increase is above threshold, send alert
       if (percentageIncrease > this.PRICE_INCREASE_THRESHOLD) {
         this.logger.log(`${token} price increased by ${percentageIncrease.toFixed(2)}% - sending alert email`);
         
@@ -89,14 +82,10 @@ export class AlertService {
     }
   }
 
-  /**
-   * Check if any price alerts should be triggered
-   */
   async checkPriceAlerts(): Promise<void> {
     this.logger.log('Checking for price alerts...');
     
     try {
-      // Get all non-triggered alerts
       const alerts = await this.priceAlertRepository.find({
         where: { triggered: false },
       });
@@ -105,7 +94,6 @@ export class AlertService {
         return;
       }
       
-      // Group alerts by token
       const alertsByToken = alerts.reduce((acc, alert) => {
         if (!acc[alert.token]) {
           acc[alert.token] = [];
@@ -114,9 +102,7 @@ export class AlertService {
         return acc;
       }, {});
       
-      // Check each token's alerts
       for (const token of Object.keys(alertsByToken)) {
-        // Get current price for this token
         const currentPrice = await this.priceRepository.findOne({
           where: { token },
           order: { timestamp: 'DESC' },
@@ -126,10 +112,8 @@ export class AlertService {
           continue;
         }
         
-        // Check each alert for this token
         for (const alert of alertsByToken[token]) {
           if (currentPrice.price >= alert.targetPrice) {
-            // Send alert email
             await this.emailService.sendTargetPriceAlertEmail(
               alert.email,
               token,
@@ -137,7 +121,6 @@ export class AlertService {
               alert.targetPrice,
             );
             
-            // Mark alert as triggered
             alert.triggered = true;
             await this.priceAlertRepository.save(alert);
             
@@ -150,12 +133,6 @@ export class AlertService {
     }
   }
 
-  /**
-   * Create a new price alert
-   * @param token Token to alert on
-   * @param targetPrice Price threshold to trigger alert
-   * @param email Email to send alert to
-   */
   async createPriceAlert(token: string, targetPrice: number, email: string): Promise<PriceAlert> {
     this.logger.log(`Creating price alert for ${token} at $${targetPrice} for ${email}`);
     
@@ -169,10 +146,6 @@ export class AlertService {
     return await this.priceAlertRepository.save(alert);
   }
 
-  /**
-   * Get all active (non-triggered) alerts
-   * @returns Array of price alerts
-   */
   async getAllAlerts(): Promise<PriceAlert[]> {
     return await this.priceAlertRepository.find({
       where: { triggered: false },
